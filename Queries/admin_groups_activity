@@ -1,0 +1,1 @@
+((winlogbeat_event_code:4728) OR (winlogbeat_event_code:4732) OR (winlogbeat_event_code:4756)) AND (winlogbeat_winlog_event_data_TargetUserName:"Domain Admins" OR winlogbeat_winlog_event_data_TargetUserName:"Enterprise Admins" OR winlogbeat_winlog_event_data_TargetUserName:"Administrators")
