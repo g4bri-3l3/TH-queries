@@ -1,0 +1,5 @@
+event_simpleName=ProcessRollup* 
+AND LinkName="*.lnk" 
+AND NOT FileName IN ("WINWORD.EXE","EXCEL.EXE","MSACCESS.EXE","AcroRd32.exe")
+| regex LinkName="[d-zD-Z]:\\\[\w\d -_]*\\.lnk"
+| table _time, ComputerName, LinkName, FileName, CommandLine
