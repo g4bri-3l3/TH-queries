@@ -1,0 +1,5 @@
+event_simpleName=CommandHistory
+| eval Commands=split(CommandHistory,"¶")
+#replace the username with specific username if you want to target a specific user
+| join aid [search UserName="*"]
+| table _time, ComputerName, ApplicationName, UserName, CommandCount_decimal, Commands, CommandHistory, LocalAddressIP4, aip, aid
