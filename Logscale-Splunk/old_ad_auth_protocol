@@ -1,0 +1,4 @@
+event_simpleName IN ("UserLogon*", "Login*") 
+AND LogonType_decimal=2 
+AND (AuthenticationPackage=NTLM OR AuthenticationPackage=NTLMv2 OR AuthenticationPackage=wdigest)
+| chart count by UserName limit=100
