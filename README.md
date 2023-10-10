@@ -1,6 +1,6 @@
 # What
 
-A list of queries to detect and hunt for threats written mostly for SPLUNK/Logscale/Graylog (but can be used with Lucene language based systems, too).
+A list of queries to detect and hunt for threats written mostly for Splunk/Logscale/Graylog (but can be used with Splunk/Lucene language based systems, too).
 
 # How
 
