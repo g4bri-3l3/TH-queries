@@ -1,0 +1,8 @@
+event_simpleName=ProcessRollup2 FileName IN ("powershell.exe","cscript.exe","wscript.exe")
+| rename CommandLine as ParentCmd
+| rename FileName as ParentFileName
+| rename SHA256HashData as ParentSHA256
+| dedup ParentCmd
+#add also adobe acrobat reader
+| join TargetProcessId_decimal, aid [search FileName IN ("WINWORD.EXE","OUTLOOK.EXE","EXCEL.EXE","ACRORD*.EXE","POWERPNT.EXE")]
+| table ComputerName, TargetProcessId_decimal, ParentFileName, FileName, ParentCmd, ParentSHA256
