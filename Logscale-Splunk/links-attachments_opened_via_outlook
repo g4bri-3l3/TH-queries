@@ -13,3 +13,11 @@ aid=* event_simpleName=ProcessRollup2 FileName=outlook.exe
   | fields aid, TargetProcessId_decimal, FileName, CommandLine] 
 | rex field=CommandLine "(?<url>https?://.*)"
 | table ComputerName, UserName, Parent, ParentCmd, FileName, url, CommandLine, aid
+
+
+
+#Attachments opened via outlook.exe
+event_simpleName="ProcessRollup*" 
+AND CommandLine="*content.outlook*" 
+AND FileName IN ("*zip*","*java*","explorer.exe","*rundll32*","*powershell*","*cscript.exe*","*wscript.exe*") 
+| table ComputerName, FileName, CommandLine, TargetFileName, SHA256HashData
