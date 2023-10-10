@@ -1,0 +1,4 @@
+event_simpleName="DnsRequest"
+| rename ContextProcessId as TargetProcessId
+| join TargetProcessId [search event_simpleName="ProcessRollup2" AND NOT ImageFileName="iexplore.exe" AND NOT ImageFileName="chrome.exe" AND NOT ImageFileName="firefox.exe"]
+| table ComputerName, timestamp, ImageFileName, DomainName, CommandLine
