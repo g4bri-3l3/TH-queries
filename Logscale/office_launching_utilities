@@ -1,10 +1,10 @@
 # Filter for events where unusual utilities (e.g., powershell, wscript) are started
-event_simpleName="ProcessRollup*" AND FileName IN ["powershell.exe", "wscript.exe", "wmic.exe", "bitsadmin.exe", "certutil.exe"]
+#event_simpleName="ProcessRollup*" AND FileName IN ["powershell.exe", "wscript.exe", "wmic.exe", "bitsadmin.exe", "certutil.exe"]
 | rename(ContextProcessId_decimal, TargetProcessId_decimal)
 
 # Join with ProcessRollup2 events where Office programs or specific executables initiated the process
 | join([event_simpleName="ProcessRollup2" AND FileName IN ["WINWORD.EXE", "EXCEL.EXE", "ACRORD*.EXE", "plugincontainer.exe"]], TargetProcessId_decimal)
-| dedup(CommandLine)
+| groupby(CommandLine)
 
 # Select the desired fields for display
 | select ComputerName, UserName, RemoteAddressIP4, RemotePort_decimal, FileName, CommandLine
