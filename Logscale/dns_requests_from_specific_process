@@ -1,5 +1,5 @@
 # Filter for DnsRequest events with specific DomainName criteria and exclude specified domains
-event_simpleName="DnsRequest"
+#event_simpleName="DnsRequest"
 AND DomainName="*.*"
 AND NOT DomainName IN ["*.microsoft.com","*.symcb.com","*.symcd.com","*.digicert.com","*.intel.com","*.verisign.com","monitoring*.amazonaws.com","*.live.com","*.virtualearth.net"]
 
@@ -10,7 +10,7 @@ AND NOT DomainName IN ["*.microsoft.com","*.symcb.com","*.symcd.com","*.digicert
 | join([event_simpleName="ProcessRollup2" AND FileName IN ["WmiPrvSE.exe","cscript.exe","svchost.exe","powershell.exe"]], TargetProcessId_decimal)
 
 # Remove duplicates based on DomainName and ComputerName
-| dedup(DomainName, ComputerName)
+| groupby(DomainName, ComputerName)
 
 # Select the desired fields for display
 | select ComputerName, DomainName, CommandLine
