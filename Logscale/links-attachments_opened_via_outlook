@@ -15,7 +15,7 @@ aid="*" AND event_simpleName="ProcessRollup2" AND FileName="outlook.exe"
 # Extract URLs from the CommandLine
 | eval(url=extract_field(CommandLine, "https?://.*"))
 # Display the output table
-| fields ComputerName, UserName, Parent, ParentCmd, FileName, url, CommandLine, aid
+| select ComputerName, UserName, Parent, ParentCmd, FileName, url, CommandLine, aid
 
 
 
@@ -24,5 +24,5 @@ aid="*" AND event_simpleName="ProcessRollup2" AND FileName="outlook.exe"
 event_simpleName="ProcessRollup*" AND CommandLine="*content.outlook*"
 AND FileName IN ["*zip*", "*java*", "explorer.exe", "*rundll32*", "*powershell*", "*cscript.exe*", "*wscript.exe*"]
 # Display relevant fields
-| fields ComputerName, FileName, CommandLine, TargetFileName, SHA256HashData
+| select ComputerName, FileName, CommandLine, TargetFileName, SHA256HashData
 
