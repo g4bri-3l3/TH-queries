@@ -1,5 +1,5 @@
 # Filter for CommandHistory events
-event_simpleName="CommandHistory"
+#event_simpleName="CommandHistory"
 
 # Split CommandHistory field by "¶" to create the Commands field
 | eval(Commands=split(CommandHistory, "¶"))
