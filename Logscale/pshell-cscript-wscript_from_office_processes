@@ -1,9 +1,9 @@
 # Filter for ProcessRollup2 events with specific executable filenames
-event_simpleName="ProcessRollup2" AND FileName IN ["powershell.exe", "cscript.exe", "wscript.exe"]
+#event_simpleName="ProcessRollup2" AND FileName IN ["powershell.exe", "cscript.exe", "wscript.exe"]
 | rename(CommandLine, ParentCmd)
 | rename(FileName, ParentFileName)
 | rename(SHA256HashData, ParentSHA256)
-| dedup(ParentCmd)
+| groupby(ParentCmd)
 
 # Join with events where Office programs or Adobe Acrobat Reader initiated the process
 | join([FileName IN ["WINWORD.EXE", "OUTLOOK.EXE", "EXCEL.EXE", "ACRORD*.EXE", "POWERPNT.EXE"]], TargetProcessId_decimal, aid)
