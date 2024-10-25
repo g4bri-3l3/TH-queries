@@ -7,4 +7,4 @@ AND NOT FileName IN ["WINWORD.EXE", "EXCEL.EXE", "MSACCESS.EXE", "AcroRd32.exe"]
 | where match(LinkName, "[d-zD-Z]:\\\\[\\w\\d\\-_]*\\.lnk")
 
 # Select fields for display
-| fields @timestamp, ComputerName, LinkName, FileName, CommandLine
+| select @timestamp, ComputerName, LinkName, FileName, CommandLine
