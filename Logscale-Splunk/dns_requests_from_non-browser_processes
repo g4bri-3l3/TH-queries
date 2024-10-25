@@ -1,4 +1,9 @@
+# Filter for DnsRequest events and rename the ContextProcessId field to TargetProcessId
 event_simpleName="DnsRequest"
-| rename ContextProcessId as TargetProcessId
-| join TargetProcessId [search event_simpleName="ProcessRollup2" AND NOT ImageFileName="iexplore.exe" AND NOT ImageFileName="chrome.exe" AND NOT ImageFileName="firefox.exe"]
-| table ComputerName, timestamp, ImageFileName, DomainName, CommandLine
+| rename(ContextProcessId, TargetProcessId)
+
+# Perform a join on TargetProcessId with ProcessRollup2 events, excluding specific browser executables
+| join([event_simpleName="ProcessRollup2" AND NOT ImageFileName IN ["iexplore.exe", "chrome.exe", "firefox.exe"]], TargetProcessId)
+
+# Select the relevant fields for display
+| select ComputerName, @timestamp, ImageFileName, DomainName, CommandLine
