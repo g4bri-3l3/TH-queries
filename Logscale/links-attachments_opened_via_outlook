@@ -1,7 +1,7 @@
 #Links Opened via Outlook.exe
 # Filter for events related to outlook.exe in ProcessRollup2
-aid="*" AND event_simpleName="ProcessRollup2" AND FileName="outlook.exe"
-| dedup(aid, TargetProcessId_decimal)
+aid="*" AND #event_simpleName="ProcessRollup2" AND FileName="outlook.exe"
+| groupby(aid, TargetProcessId_decimal)
 | rename(FileName, Parent)
 | rename(CommandLine, ParentCmd)
 | fields ComputerName, aid, TargetProcessId_decimal, Parent, ParentCmd
@@ -21,7 +21,7 @@ aid="*" AND event_simpleName="ProcessRollup2" AND FileName="outlook.exe"
 
 #Attachments Opened via Outlook.exe
 # Filter ProcessRollup events with CommandLine indicating attachment opening via outlook.exe
-event_simpleName="ProcessRollup*" AND CommandLine="*content.outlook*"
+#event_simpleName="ProcessRollup*" AND CommandLine="*content.outlook*"
 AND FileName IN ["*zip*", "*java*", "explorer.exe", "*rundll32*", "*powershell*", "*cscript.exe*", "*wscript.exe*"]
 # Display relevant fields
 | select ComputerName, FileName, CommandLine, TargetFileName, SHA256HashData
