@@ -1,5 +1,5 @@
 # Filter for DnsRequest events and rename the ContextProcessId field to TargetProcessId
-event_simpleName="DnsRequest"
+#event_simpleName="DnsRequest"
 | rename(ContextProcessId, TargetProcessId)
 
 # Perform a join on TargetProcessId with ProcessRollup2 events, excluding specific browser executables
