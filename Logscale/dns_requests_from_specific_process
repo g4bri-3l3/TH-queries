@@ -1,9 +1,16 @@
-event_simpleName="DnsRequest" 
-AND DomainName="*.*" 
-AND NOT DomainName IN ("*.microsoft.com","*.symcb.com","*.symcd.com","*.digicert.com","*.intel.com","*.verisign.com","monitoring*.amazonaws.com","*.live.com","*.virtualearth.net") 
-| rename ContextProcessId_decimal as TargetProcessId_decimal 
-| join TargetProcessId_decimal [search event_simpleName="ProcessRollup2" 
-#change the filename to be the .exe you are looking for
-AND FileName IN ("WmiPrvSE.exe","cscript.exe","svchost.exe","powershell.exe")] 
-| dedup DomainName, ComputerName 
-| table ComputerName, DomainName, CommandLine
+# Filter for DnsRequest events with specific DomainName criteria and exclude specified domains
+event_simpleName="DnsRequest"
+AND DomainName="*.*"
+AND NOT DomainName IN ["*.microsoft.com","*.symcb.com","*.symcd.com","*.digicert.com","*.intel.com","*.verisign.com","monitoring*.amazonaws.com","*.live.com","*.virtualearth.net"]
+
+# Rename ContextProcessId_decimal as TargetProcessId_decimal
+| rename(ContextProcessId_decimal, TargetProcessId_decimal)
+
+# Join with ProcessRollup2 events for specified executables
+| join([event_simpleName="ProcessRollup2" AND FileName IN ["WmiPrvSE.exe","cscript.exe","svchost.exe","powershell.exe"]], TargetProcessId_decimal)
+
+# Remove duplicates based on DomainName and ComputerName
+| dedup(DomainName, ComputerName)
+
+# Select the desired fields for display
+| select ComputerName, DomainName, CommandLine
