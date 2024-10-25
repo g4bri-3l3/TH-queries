@@ -1,5 +1,10 @@
-event_simpleName=ProcessRollup* 
+# Filter for ProcessRollup events with LinkName ending in .lnk, excluding specific executables
+event_simpleName="ProcessRollup*" 
 AND LinkName="*.lnk" 
-AND NOT FileName IN ("WINWORD.EXE","EXCEL.EXE","MSACCESS.EXE","AcroRd32.exe")
-| regex LinkName="[d-zD-Z]:\\\[\w\d -_]*\\.lnk"
-| table _time, ComputerName, LinkName, FileName, CommandLine
+AND NOT FileName IN ["WINWORD.EXE", "EXCEL.EXE", "MSACCESS.EXE", "AcroRd32.exe"]
+
+# Apply regex to match LinkName with specific drive letters and file format pattern
+| where match(LinkName, "[d-zD-Z]:\\\\[\\w\\d\\-_]*\\.lnk")
+
+# Select fields for display
+| fields @timestamp, ComputerName, LinkName, FileName, CommandLine
