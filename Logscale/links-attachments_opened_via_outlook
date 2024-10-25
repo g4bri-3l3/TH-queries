@@ -1,23 +1,28 @@
-#Lists links opened via outlook.exe
-aid=* event_simpleName=ProcessRollup2 FileName=outlook.exe 
-| dedup aid TargetProcessId_decimal 
-| rename FileName as Parent 
-| rename CommandLine as ParentCmd 
-| table ComputerName, aid, TargetProcessId_decimal, Parent, ParentCmd 
-| join max=0 aid TargetProcessId_decimal 
-  [search name=ProcessRollup* FileName=chrome.exe OR FileName=firefox.exe OR FileName=iexplore.exe  AND CommandLine="*http*"
-  | rename ParentProcessId_decimal as TargetProcessId_decimal 
-  | rename MD5HashData as MD5 
-  | rename FilePath as ChildPath 
-  | dedup aid TargetProcessId_decimal MD5 
-  | fields aid, TargetProcessId_decimal, FileName, CommandLine] 
-| rex field=CommandLine "(?<url>https?://.*)"
-| table ComputerName, UserName, Parent, ParentCmd, FileName, url, CommandLine, aid
+#Links Opened via Outlook.exe
+# Filter for events related to outlook.exe in ProcessRollup2
+aid="*" AND event_simpleName="ProcessRollup2" AND FileName="outlook.exe"
+| dedup(aid, TargetProcessId_decimal)
+| rename(FileName, Parent)
+| rename(CommandLine, ParentCmd)
+| fields ComputerName, aid, TargetProcessId_decimal, Parent, ParentCmd
+# Join with ProcessRollup events for browser processes with HTTP links
+| join([event_simpleName="ProcessRollup*" AND (FileName="chrome.exe" OR FileName="firefox.exe" OR FileName="iexplore.exe") AND CommandLine="*http*"], aid, TargetProcessId_decimal)
+| rename(ParentProcessId_decimal, TargetProcessId_decimal)
+| rename(MD5HashData, MD5)
+| rename(FilePath, ChildPath)
+| dedup(aid, TargetProcessId_decimal, MD5)
+| fields aid, TargetProcessId_decimal, FileName, CommandLine
+# Extract URLs from the CommandLine
+| eval(url=extract_field(CommandLine, "https?://.*"))
+# Display the output table
+| fields ComputerName, UserName, Parent, ParentCmd, FileName, url, CommandLine, aid
 
 
 
-#Attachments opened via outlook.exe
-event_simpleName="ProcessRollup*" 
-AND CommandLine="*content.outlook*" 
-AND FileName IN ("*zip*","*java*","explorer.exe","*rundll32*","*powershell*","*cscript.exe*","*wscript.exe*") 
-| table ComputerName, FileName, CommandLine, TargetFileName, SHA256HashData
+#Attachments Opened via Outlook.exe
+# Filter ProcessRollup events with CommandLine indicating attachment opening via outlook.exe
+event_simpleName="ProcessRollup*" AND CommandLine="*content.outlook*"
+AND FileName IN ["*zip*", "*java*", "explorer.exe", "*rundll32*", "*powershell*", "*cscript.exe*", "*wscript.exe*"]
+# Display relevant fields
+| fields ComputerName, FileName, CommandLine, TargetFileName, SHA256HashData
+
