@@ -1,4 +1,8 @@
-event_simpleName IN ("UserLogon*", "Login*") 
+# Filter for user logon events with specific logon types and authentication packages
+event_simpleName IN ["UserLogon*", "Login*"] 
 AND LogonType_decimal=2 
-AND (AuthenticationPackage=NTLM OR AuthenticationPackage=NTLMv2 OR AuthenticationPackage=wdigest)
-| chart count by UserName limit=100
+AND AuthenticationPackage IN ["NTLM", "NTLMv2", "wdigest"]
+
+# Aggregate and count events by UserName, limiting results to the top 100
+| count() by UserName
+| limit(100)
