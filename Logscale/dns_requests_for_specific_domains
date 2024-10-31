@@ -1,0 +1,13 @@
+//This query will ask for a parameter "DomainName"
+#event_simpleName=DnsRequest
+| DomainName=~wildcard(?{DomainName="*"}, ignoreCase=true)
+| table([#@timestamp, LocalAddressIP4, RemoteAddressIP4, Computername, DomainName, HttpHost, HttpPath, ContextBaseFileName])
+////////////
+////////////
+////////////
+////////////
+//If you want to look for multiple domains one liner
+//For instance you can save that query for immediately looking up on AI domains
+#event_simpleName=DnsRequest
+| DomainName=/(chat.openai\.com|\.gemini.google.com\.copilot.microsoft.com)/i
+| table([#@timestamp, LocalAddressIP4, RemoteAddressIP4, Computername, DomainName, HttpHost, HttpPath, ContextBaseFileName])
