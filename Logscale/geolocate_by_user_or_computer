@@ -1,0 +1,10 @@
+//Query will ask you to provide UserName or ComputerName as parameter
+#event_simpleName=UserLogon
+| Computername=~wildcard(?{ComputerName="*"}, ignoreCase=true)
+| UserName=~wildcard(?{UserName="*"}, ignoreCase=true)
+| groupBy([aid, ComputerName], function=([selectFromMax(field="@timestamp", include=[UserName, UserSid, LogonTime, aip])]))
+| ipLocation (aip, as=IP)
+| IP.country=*
+//Countries to ignore, if any
+| !in(field="IP.country", values=["RU"])
+| asn(aip)
