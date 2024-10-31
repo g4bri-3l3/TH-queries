@@ -1,11 +1,5 @@
-# Filter for CommandHistory events
-#event_simpleName="CommandHistory"
-
-# Split CommandHistory field by "¶" to create the Commands field
-| eval(Commands=split(CommandHistory, "¶"))
-
-# Join with events containing UserName, targeting a specific user if desired
-| join([UserName="*"], aid)
-
-# Select the relevant fields for display
-| select @timestamp, ComputerName, ApplicationName, UserName, CommandCount_decimal, Commands, CommandHistory, LocalAddressIP4, aip, aid
+event_simpleName=CommandHistory
+| eval Commands=split(CommandHistory,"¶")
+#replace the username with specific username if you want to target a specific user
+| join aid [search UserName="*"]
+| table _time, ComputerName, ApplicationName, UserName, CommandCount_decimal, Commands, CommandHistory, LocalAddressIP4, aip, aid
