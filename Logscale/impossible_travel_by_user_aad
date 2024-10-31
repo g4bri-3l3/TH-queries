@@ -1,0 +1,7 @@
+//Assuming you are already ingesting AAD auth logs
+#event_simpleName=UserLogon
+| UserName=~wildcard(?{UserName="*"})
+| ipLocation(RemoteAddressIP4)
+//Adjust the span as you like
+| bucket(span=60m, field=UserName, function=([count(RemoteAddressIP.country, distinct=true, as=CountryCount), collect([RemoteAddressIP4.country])]), limit=500)
+| CountryCount > 1
