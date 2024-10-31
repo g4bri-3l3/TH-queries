@@ -1,0 +1,3 @@
+#event_simpleName=ProcessRollup2 event_platform=Win
+| ImageFileName=/\\wireshark\.exe/i
+| groupby([ComputerName, UserName, ImageFileName])
