@@ -1,0 +1,10 @@
+//Query will also ask for parameters, if needed
+#event_simpleName=UserLogon
+| ComputerName=?ComputerName
+| UserName=?UserName
+//Enrich with the logontype via falcon helper
+| $helper(field=LogonType)
+//Lookup only for Interactive logons and unlock events
+| LogonType="Interactive" OR LogonType="Unlock" OR LogonType="Cached Interactive"
+| LogonType=LogonType
+| table([@timestamp, ComputerName, UserName, LogonType],limit=20000)
