@@ -1,0 +1,6 @@
+//Just replace source subnet, destination subnet and ports in the query
+#event_simpleName = "NetworkConnectIP4"
+| cidr(LocalAddressIP4, subnet=["0.0.0.0/8"]
+| cidr(RemoteAddressIP4, subnet=["0.0.0.0/8"]
+| in(field="RemotePort", values=[80,443,22])
+| groupby([ComputerName,ContextBaseFileName,RemoteAddressIP4,RemotePort])
