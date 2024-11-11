@@ -7,5 +7,5 @@ NB: I'm converting the queries from old language to Logscale language in free ti
 # How
 
 - For Splunk: just copy-paste it
-- For Logscale: just copy paste it
+- For Logscale: just copy-paste it
 - For Graylog: I'm assuming you are using winlogbeat for shipping logs from Windows boxes here. Just copy-paste the queries in the search bar or use them to create custom alerts (for instance: "alert me when you see a domain admin change").
