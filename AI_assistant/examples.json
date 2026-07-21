@@ -1,1 +1,77 @@
-
+{
+  "_note": "Compiled from the real TH-queries repo (Logscale/Graylog folders + Old_Falcon, which is legacy Splunk SPL syntax per the repo README). Two Logscale queries (AI-domains DNS lookup, browser-process DNS correlation) had genuine syntax/logic bugs in the source files -- fixed here: broken regex alternation, a typo'd field name, concat() swapped for coalesce(), and a bracket mismatch in the final groupBy.",
+  "logscale": [
+    {
+      "description": "DNS requests to a specific domain (parameterized query)",
+      "query": "//This query will ask for a parameter \"DomainName\"\n#event_simpleName=DnsRequest\n| DomainName=~wildcard(?{DomainName=\"*\"}, ignoreCase=true)\n| table([#@timestamp, LocalAddressIP4, RemoteAddressIP4, Computername, DomainName, HttpHost, HttpPath, ContextBaseFileName])"
+    },
+    {
+      "description": "Saved one-liner: DNS requests to known AI service domains (ChatGPT, Gemini, Copilot) (syntax fixed: regex alternation was broken in the source)",
+      "query": "#event_simpleName=DnsRequest\n| DomainName=/(chat\\.openai\\.com|gemini\\.google\\.com|copilot\\.microsoft\\.com)/i\n| table([#@timestamp, LocalAddressIP4, RemoteAddressIP4, Computername, DomainName, HttpHost, HttpPath, ContextBaseFileName])"
+    },
+    {
+      "description": "Correlate process execution and DNS events to confirm a browser process performed a given DNS resolution (syntax + logic fixed: typo'd field/param names, concat->coalesce, bracket mismatch)",
+      "query": "// Get all process execution and DNS related events on Windows\n(#event_simpleName=ProcessRollup2 OR #event_simpleName=DnsRequest) event_platform=Win\n// Normalize file name value across both events (pick whichever is populated)\n| filename:=coalesce([Filename, ContextBaseFileName])\n// Make sure responsible process is a web browser\n| in(field=\"filename\", values=[\"chrome.exe\",\"firefox.exe\",\"msedge.exe\"], ignoreCase=true)\n// Normalize Falcon PID\n| falconPID:=TargetProcessID\n| falconPID:=ContextProcessId\n// Use join to make sure DNS resolution has the same PID value\n| selfJoinFilter(field=[aid, falconPID], where=[{#event_simpleName=ProcessRollup2}, {#event_simpleName=DnsRequest}])\n// Aggregate the results\n| groupBy([aid, falconPID], function=collect([ComputerName, UserName, filename, DomainName]))"
+    },
+    {
+      "description": "Endpoint network connections filtered by source/destination subnet and port",
+      "query": "//Just replace source subnet, destination subnet and ports in the query\n#event_simpleName = \"NetworkConnectIP4\"\n| cidr(LocalAddressIP4, subnet=[\"0.0.0.0/8\"]\n| cidr(RemoteAddressIP4, subnet=[\"0.0.0.0/8\"]\n| in(field=\"RemotePort\", values=[80,443,22])\n| groupby([ComputerName,ContextBaseFileName,RemoteAddressIP4,RemotePort])"
+    },
+    {
+      "description": "Geolocate logons by user or computer (parameterized), with country enrichment",
+      "query": "//Query will ask you to provide UserName or ComputerName as parameter\n#event_simpleName=UserLogon\n| Computername=~wildcard(?{ComputerName=\"*\"}, ignoreCase=true)\n| UserName=~wildcard(?{UserName=\"*\"}, ignoreCase=true)\n| groupBy([aid, ComputerName], function=([selectFromMax(field=\"@timestamp\", include=[UserName, UserSid, LogonTime, aip])]))\n| ipLocation (aip, as=IP)\n| IP.country=*\n//Countries to ignore, if any\n| !in(field=\"IP.country\", values=[\"RU\"])\n| asn(aip)"
+    },
+    {
+      "description": "Impossible travel detection: same user authenticating from multiple countries within a time window",
+      "query": "//Assuming you are already ingesting AAD auth logs\n#event_simpleName=UserLogon\n| UserName=~wildcard(?{UserName=\"*\"})\n| ipLocation(RemoteAddressIP4)\n//Adjust the span as you like\n| bucket(span=60m, field=UserName, function=([count(RemoteAddressIP.country, distinct=true, as=CountryCount), collect([RemoteAddressIP4.country])]), limit=500)\n| CountryCount > 1"
+    },
+    {
+      "description": "LNK file execution from external/removable drives, excluding common office apps",
+      "query": "#event_simpleName=\"ProcessRollup*\" AND LinkName=/.lnx/i AND NOT Filename=/(WINWORD\\.exe|EXCEL\\.exe\\MSACCESS.exe|AcroRd32.exe)/i\n| !LinkName=/(c:\\\\\\)/i\n| select[(@timestamp,ComputerName,LinkName,FileName,CommandLine)]"
+    },
+    {
+      "description": "Hunt for legacy/insecure authentication protocols (NTLM, NTLMv2, WDigest)",
+      "query": "#event_simpleName=UserLogon* \"Login*\"\n| LogonType=2\n| AuthenticationPackage = NTLM OR AuthenticationPackage= NTLMv2 or AuthenticationPackage = wdigest\n| count(as=UserName)"
+    },
+    {
+      "description": "Hunt for files whose names suggest stored clear-text credentials",
+      "query": "#event_simpleName=* FileName=*\n| FileName=/(passw|pwd|password|codici|codes|pass|credential|credenziali|credentials).+(xlsx?|txt|ps1|jpg|docx?)$/i\n| table([aid, ComputerName, #event_simpleName, FileName])"
+    },
+    {
+      "description": "User logons and workstation unlocks, filtered by user or computer",
+      "query": "//Query will also ask for parameters, if needed\n#event_simpleName=UserLogon\n| ComputerName=?ComputerName\n| UserName=?UserName\n//Enrich with the logontype via falcon helper\n| $helper(field=LogonType)\n//Lookup only for Interactive logons and unlock events\n| LogonType=\"Interactive\" OR LogonType=\"Unlock\" OR LogonType=\"Cached Interactive\"\n| LogonType=LogonType\n| table([@timestamp, ComputerName, UserName, LogonType],limit=20000)"
+    },
+    {
+      "description": "Detect execution of Wireshark on an endpoint",
+      "query": "#event_simpleName=ProcessRollup2 event_platform=Win\n| ImageFileName=/\\\\wireshark\\.exe/i\n| groupby([ComputerName, UserName, ImageFileName])"
+    }
+  ],
+  "splunk": [
+    {
+      "description": "Search shell command history events for a user (legacy Falcon/Splunk syntax)",
+      "query": "event_simpleName=CommandHistory\n| eval Commands=split(CommandHistory,\"¶\")\n#replace the username with specific username if you want to target a specific user\n| join aid [search UserName=\"*\"]\n| table _time, ComputerName, ApplicationName, UserName, CommandCount_decimal, Commands, CommandHistory, LocalAddressIP4, aip, aid"
+    },
+    {
+      "description": "Correlate Outlook process with a subsequent browser process to surface links/attachments opened from email",
+      "query": "#Lists links opened via outlook.exe\naid=* event_simpleName=ProcessRollup2 FileName=outlook.exe \n| dedup aid TargetProcessId_decimal \n| rename FileName as Parent \n| rename CommandLine as ParentCmd \n| table ComputerName, aid, TargetProcessId_decimal, Parent, ParentCmd \n| join max=0 aid TargetProcessId_decimal \n  [search name=ProcessRollup* FileName=chrome.exe OR FileName=firefox.exe OR FileName=iexplore.exe  AND CommandLine=\"*http*\"\n  | rename ParentProcessId_decimal as TargetProcessId_decimal \n  | rename MD5HashData as MD5 \n  | rename FilePath as ChildPath \n  | dedup aid TargetProcessId_decimal MD5 \n  | fields aid, TargetProcessId_decimal, FileName, CommandLine] \n| rex field=CommandLine \"(?<url>https?://.*)\"\n| table ComputerName, UserName, Parent, ParentCmd, FileName, url, CommandLine, aid"
+    },
+    {
+      "description": "Office applications spawning suspicious utilities (powershell, wscript, wmic, bitsadmin, certutil)",
+      "query": "#Office programs starting unusual utilities such as bits and powershell\nevent_simpleName=\"ProcessRollup*\" AND FileName IN (\"powershell.exe\",\"wscript.exe\",\"wmic.exe\",\"bitsadmin.exe\",\"certutil.exe\") \n|   rename ContextProcessId_decimal as TargetProcessId_decimal \n|  join max=1000 TargetProcessId_decimal [search event_simpleName=\"ProcessRollup2\" FileName IN (\"WINWORD.EXE\",\"EXCEL.EXE\",\"ACRORD*.EXE\",\"plugincontainer.exe\")\n    | dedup CommandLine]\n| table  ComputerName UserName RemoteAddressIP4 RemotePort_decimal FileName CommandLine"
+    },
+    {
+      "description": "Script interpreters (powershell/cscript/wscript) spawned from Office/Adobe processes",
+      "query": "event_simpleName=ProcessRollup2 FileName IN (\"powershell.exe\",\"cscript.exe\",\"wscript.exe\")\n| rename CommandLine as ParentCmd\n| rename FileName as ParentFileName\n| rename SHA256HashData as ParentSHA256\n| dedup ParentCmd\n#add also adobe acrobat reader\n| join TargetProcessId_decimal, aid [search FileName IN (\"WINWORD.EXE\",\"OUTLOOK.EXE\",\"EXCEL.EXE\",\"ACRORD*.EXE\",\"POWERPNT.EXE\")]\n| table ComputerName, TargetProcessId_decimal, ParentFileName, FileName, ParentCmd, ParentSHA256"
+    }
+  ],
+  "graylog": [
+    {
+      "description": "Privileged AD group membership changes (Domain Admins, Enterprise Admins, Administrators) via event codes 4728/4732/4756",
+      "query": "((winlogbeat_event_code:4728) OR (winlogbeat_event_code:4732) OR (winlogbeat_event_code:4756)) AND (winlogbeat_winlog_event_data_TargetUserName:\"Domain Admins\" OR winlogbeat_winlog_event_data_TargetUserName:\"Enterprise Admins\" OR winlogbeat_winlog_event_data_TargetUserName:\"Administrators\")"
+    },
+    {
+      "description": "Broad set of suspicious Linux command-line indicators (sudoers/crontab edits, reverse shells, history clearing, etc.)",
+      "query": "(full_message:\"/etc/rsyslog.conf\" OR full_message:\"crontab\" OR full_message:\"/etc/sudoers\" OR full_message:\"usermod -aG wheel\" OR full_message:\"visudo\" OR full_message:\"/etc/shadow\" OR full_message:\"/etc/passwd\" OR full_message:\"getent passwd\" OR full_message:\"rm -rf\" OR full_message:\"/bin/find /etc/\" OR full_message:\"COMMAND=authorized_keys\" OR full_message:\"viminfo\" OR full_message:\"COMMAND=/bin/python\" \"simplehttpserver\" OR full_message:\"COMMAND=/bin/python\" \"http.server\" OR full_message:\"/etc/sysconfig\" OR full_message:\"COMMAND=/bin/find /var\" OR full_message:\"COMMAND=/bin/nc\" OR full_message:\"COMMAND=/bin/socat\" OR full_message:\"COMMAND=/bin/python\" \"import pty\" OR full_message:\"777\" OR full_message:\"stop firewalld\" OR full_message:\"base64\" OR full_message:\"ns_sploit\" OR full_message:\"haxhax\" OR full_message:\"/bin/cp /bin/sh\" OR full_message:\"/bin/cp /bin/ksh\" OR full_message:\"ysocereal.jar\" OR full_message:\"/sbin/tcpdump\" OR full_message:\"insmod\" OR full_message:\"modprobe\" OR full_message:\"useradd\" OR full_message:\"lsmod\" OR full_message:\"wget\" OR full_message:\"/etc/passwd\" OR full_message:\"set +o history\" OR full_message:\"/etc/profile\" OR full_message:\"history -c\" ) AND NOT process_id:777"
+    }
+  ]
+}
