@@ -1,12 +1,13 @@
 // Get all process execution and DNS related events on Windows
-(#event_simpleName=ProcessRollup2 OR #eventsimpleName=DnsRequest) event_platform=Win
-// Normalize file name value across both events
-| filename:=concat([Filename, ContextBaseFileName])
+(#event_simpleName=ProcessRollup2 OR #event_simpleName=DnsRequest) event_platform=Win
+// Normalize file name value across both events (pick whichever is populated)
+| filename:=coalesce([Filename, ContextBaseFileName])
 // Make sure responsible process is a web browser
-| in(field="filename", values=[chrome.exe, firefox.exe, msedge.exe], ignoraCase=true)
+| in(field="filename", values=["chrome.exe","firefox.exe","msedge.exe"], ignoreCase=true)
 // Normalize Falcon PID
-| falconPID:=TargetProcessID | falconPID:=ContextProcessId
+| falconPID:=TargetProcessID
+| falconPID:=ContextProcessId
 // Use join to make sure DNS resolution has the same PID value
 | selfJoinFilter(field=[aid, falconPID], where=[{#event_simpleName=ProcessRollup2}, {#event_simpleName=DnsRequest}])
 // Aggregate the results
-| groupby([aid, falconPID), function=([collect([ComputerName, UserName, fileName, DomainName])))
+| groupBy([aid, falconPID], function=collect([ComputerName, UserName, filename, DomainName]))
