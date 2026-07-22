@@ -1,0 +1,31 @@
+{
+  "_note": "Small curated subset relevant to the detections in this repo, not the full ATT&CK corpus. Verify against https://attack.mitre.org before extending, since technique/sub-technique numbering does get revised. For full coverage, pull the official STIX data from https://github.com/mitre-attack/attack-stix-data instead of maintaining this by hand.",
+
+  "techniques": [
+    {
+      "id": "T1021.001",
+      "name": "Remote Services: Remote Desktop Protocol",
+      "tactic": "Lateral Movement"
+    },
+    {
+      "id": "T1552.001",
+      "name": "Unsecured Credentials: Credentials In Files",
+      "tactic": "Credential Access"
+    },
+    {
+      "id": "T1204.002",
+      "name": "User Execution: Malicious File",
+      "tactic": "Execution"
+    },
+    {
+      "id": "T1078",
+      "name": "Valid Accounts",
+      "tactic": "Initial Access / Persistence / Privilege Escalation / Defense Evasion"
+    },
+    {
+      "id": "T1078.002",
+      "name": "Valid Accounts: Domain Accounts",
+      "tactic": "Initial Access / Persistence / Privilege Escalation / Defense Evasion"
+    }
+  ]
+}
