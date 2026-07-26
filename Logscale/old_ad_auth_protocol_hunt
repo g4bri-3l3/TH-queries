@@ -1,4 +1,5 @@
-#event_simpleName=UserLogon* "Login*"
+#event_simpleName=UserLogon
 | LogonType=2
-| AuthenticationPackage = NTLM OR AuthenticationPackage= NTLMv2 or AuthenticationPackage = wdigest
-| count(as=UserName)
+| AuthenticationPackage=NTLM OR AuthenticationPackage=NTLMv2 OR AuthenticationPackage=wdigest
+| groupBy([UserName, ComputerName, AuthenticationPackage], function=count(as=EventCount))
+| sort(field=EventCount, order=desc)
