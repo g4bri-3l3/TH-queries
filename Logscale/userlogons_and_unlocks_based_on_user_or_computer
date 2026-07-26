@@ -2,9 +2,13 @@
 #event_simpleName=UserLogon
 | ComputerName=?ComputerName
 | UserName=?UserName
-//Enrich with the logontype via falcon helper
-| $helper(field=LogonType)
+//Decode numeric LogonType into a readable label
+| case {
+    LogonType=2  | LogonType:="Interactive";
+    LogonType=7  | LogonType:="Unlock";
+    LogonType=11 | LogonType:="Cached Interactive";
+    *;
+}
 //Lookup only for Interactive logons and unlock events
 | LogonType="Interactive" OR LogonType="Unlock" OR LogonType="Cached Interactive"
-| LogonType=LogonType
-| table([@timestamp, ComputerName, UserName, LogonType],limit=20000)
+| table([@timestamp, ComputerName, UserName, LogonType], limit=20000)
