@@ -1,3 +1,6 @@
-#event_simpleName="ProcessRollup*" AND LinkName=/.lnx/i AND NOT Filename=/(WINWORD\.exe|EXCEL\.exe\MSACCESS.exe|AcroRd32.exe)/i
-| !LinkName=/(c:\\\)/i
-| select[(@timestamp,ComputerName,LinkName,FileName,CommandLine)]
+#event_simpleName=ProcessRollup2
+| LinkName=/\.lnk$/i
+| !FileName=/(WINWORD\.exe|EXCEL\.exe|MSACCESS\.exe|AcroRd32\.exe)/i
+| !LinkName=/^[Cc]:\\/i
+| sort(field=@timestamp, order=desc)
+| select([@timestamp, ComputerName, LinkName, FileName, CommandLine])
