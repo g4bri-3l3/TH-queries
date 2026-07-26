@@ -1,3 +1,4 @@
 #event_simpleName=ProcessRollup2 event_platform=Win
-| ImageFileName=/\\wireshark\.exe/i
-| groupby([ComputerName, UserName, ImageFileName])
+| ImageFileName=/\\wireshark\.exe$/i
+| groupBy([ComputerName, UserName, ImageFileName], function=count(as=ExecutionCount))
+| sort(field=ExecutionCount, order=desc)
