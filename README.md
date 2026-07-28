@@ -10,7 +10,9 @@ A list of queries to detect and hunt for threats written mostly for Logscale/Gra
 
 Translates a plain-English detection idea into a draft Logscale / Splunk / Graylog query, using a few real queries from this repo as few-shot style/field reference. Available in two versions with identical behavior - `ai_query_generator.py` (Python) and `ai_query_generator.ps1` (PowerShell, no extra dependencies beyond what ships with PowerShell 5.1+/7+).
 
-> ⚠️ Generated queries are a **starting point, not a production-ready detection**. Always validate field names against your actual log schema, test against historical data, and tune for false positives before deploying as an alert.
+> Generated queries are a **starting point, not a production-ready detection**. Always validate field names against your actual log schema, test against historical data, and tune for false positives before deploying as an alert.
+
+![AI Query Generator flow](assets/ai_query_generator_flow.svg)
 
 ### Setup (Python)
 
