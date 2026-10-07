@@ -36,10 +36,10 @@ from pathlib import Path
 
 import requests
 
-GEMINI_MODEL = "gemini-3.5-flash"
-GEMINI_ENDPOINT = (
-    f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-)
+DEFAULT_MODEL = "gemini-3.5-flash"
+GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 SUPPORTED_PLATFORMS = ("logscale", "splunk", "graylog")
 
@@ -90,7 +90,7 @@ def format_mitre_list(techniques: list) -> str:
 
 def validate_mitre_technique(value, techniques: list):
     """Return value unchanged if it's a real ID from the reference list, else None + warning."""
-    if value is None:
+    if not value or value == "null":
         return None
     valid_ids = {t["id"] for t in techniques}
     if value in valid_ids:
@@ -114,13 +114,20 @@ def build_prompt(user_prompt: str, platform: str, examples: list) -> str:
     return "\n".join(parts)
 
 
-def call_gemini(system_prompt: str, user_prompt: str, api_key: str) -> str:
+def call_gemini(system_prompt: str, user_prompt: str, api_key: str, model: str) -> str:
     payload = {
         "system_instruction": {"parts": [{"text": system_prompt}]},
         "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
-        "generationConfig": {"temperature": 0.2},
+        "generationConfig": {"temperature": 0.2, "responseMimeType": "application/json"},
     }
-    resp = requests.post(f"{GEMINI_ENDPOINT}?key={api_key}", json=payload, timeout=30)
+    # API key sent as a header rather than a URL query parameter, so it doesn't
+    # end up verbatim in any proxy/TLS-inspection access logs.
+    resp = requests.post(
+        GEMINI_ENDPOINT.format(model=model),
+        json=payload,
+        headers={"x-goog-api-key": api_key},
+        timeout=30,
+    )
     resp.raise_for_status()
     data = resp.json()
     return data["candidates"][0]["content"]["parts"][0]["text"]
@@ -133,11 +140,16 @@ def main():
     parser.add_argument("--platform", choices=SUPPORTED_PLATFORMS, required=True)
     parser.add_argument("--prompt", required=True, help="Plain-English detection idea")
     parser.add_argument(
-        "--examples-file", default="examples.json", help="Few-shot examples file"
+        "--examples-file",
+        default=str(SCRIPT_DIR / "examples.json"),
+        help="Few-shot examples file",
     )
     parser.add_argument(
-        "--mitre-file", default="mitre_reference.json", help="Curated MITRE ATT&CK reference file"
+        "--mitre-file",
+        default=str(SCRIPT_DIR / "mitre_reference.json"),
+        help="Curated MITRE ATT&CK reference file",
     )
+    parser.add_argument("--model", default=DEFAULT_MODEL, help="Gemini model name")
     parser.add_argument(
         "--explain", action="store_true", help="Also print assumptions/caveats/MITRE mapping"
     )
@@ -154,7 +166,10 @@ def main():
     )
     user_prompt = build_prompt(args.prompt, args.platform, examples)
 
-    raw = call_gemini(system_prompt, user_prompt, api_key)
+    try:
+        raw = call_gemini(system_prompt, user_prompt, api_key, args.model)
+    except (requests.RequestException, KeyError, IndexError) as e:
+        sys.exit(f"ERROR: Gemini API call failed: {e}")
 
     try:
         result = json.loads(raw)

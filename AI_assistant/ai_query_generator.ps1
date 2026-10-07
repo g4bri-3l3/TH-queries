@@ -23,16 +23,16 @@
     Plain-English detection idea.
 
 .PARAMETER ExamplesFile
-    Path to the few-shot examples file (default examples.json).
+    Path to the few-shot examples file (default examples.json next to this script).
 
 .PARAMETER MitreFile
-    Path to the curated MITRE ATT&CK reference file (default mitre_reference.json).
+    Path to the curated MITRE ATT&CK reference file (default mitre_reference.json next to this script).
 
 .PARAMETER ApiKey
     Gemini API key. Defaults to $env:GEMINI_API_KEY.
 
 .PARAMETER Model
-    Gemini model name. Defaults to gemini-3.7-flash.
+    Gemini model name. Defaults to gemini-3.5-flash.
 
 .PARAMETER Explain
     Also print assumptions, MITRE mapping, and caveats.
@@ -50,10 +50,10 @@ Param(
     [Parameter(Mandatory = $true)]
     [string]$Prompt,
 
-    [string]$ExamplesFile = "examples.json",
-    [string]$MitreFile = "mitre_reference.json",
+    [string]$ExamplesFile = (Join-Path $PSScriptRoot "examples.json"),
+    [string]$MitreFile = (Join-Path $PSScriptRoot "mitre_reference.json"),
     [string]$ApiKey = $env:GEMINI_API_KEY,
-    [string]$Model = "gemini-3.7-flash",
+    [string]$Model = "gemini-3.5-flash",
     [switch]$Explain
 )
 
@@ -95,7 +95,7 @@ function Test-MitreTechnique {
 }
 
 # --- Load context ---
-$examples = Get-FewShotExamples -Path $ExamplesFile -Platform $Platform
+$examples = @(Get-FewShotExamples -Path $ExamplesFile -Platform $Platform)
 $techniques = @(Get-MitreReference -Path $MitreFile)
 $mitreListText = Format-MitreList -Techniques $techniques
 
@@ -137,7 +137,7 @@ $userPrompt = $userPromptLines -join "`n"
 $bodyObj = @{
     system_instruction = @{ parts = @(@{ text = $systemPrompt }) }
     contents           = @(@{ role = "user"; parts = @(@{ text = $userPrompt }) })
-    generationConfig   = @{ temperature = 0.2 }
+    generationConfig   = @{ temperature = 0.2; responseMimeType = "application/json" }
 }
 $body = $bodyObj | ConvertTo-Json -Depth 10
 
