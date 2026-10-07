@@ -17,15 +17,14 @@ Translates a plain-English detection idea into a draft Logscale / Splunk / Grayl
 ### Setup (Python)
 
 ```bash
-pip install -r requirements.txt
-cp .env.example .env   # then edit .env with your key, or export it directly
+pip install -r AI_assistant/requirements.txt
 export GEMINI_API_KEY="..."
 ```
 
 ### Usage (Python)
 
 ```bash
-python ai_query_generator.py \
+python AI_assistant/ai_query_generator.py \
   --platform logscale \
   --prompt "detect a new scheduled task created remotely" \
   --explain
@@ -36,10 +35,12 @@ python ai_query_generator.py \
 ```powershell
 $env:GEMINI_API_KEY = "..."
 
-.\ai_query_generator.ps1 -Platform logscale -Prompt "detect a new scheduled task created remotely" -Explain
+.\AI_assistant\ai_query_generator.ps1 -Platform logscale -Prompt "detect a new scheduled task created remotely" -Explain
 ```
 
-Add a handful of your own queries to `examples.json` (replacing the placeholders) so the model matches your real field names and conventions. Both versions read the same `examples.json` and `mitre_reference.json`, so you only maintain one copy of each.
+The API key is read from the `GEMINI_API_KEY` environment variable (or `-ApiKey` in PowerShell) and sent in the `x-goog-api-key` header, never in the URL. Both versions default to `gemini-3.5-flash`; override with `--model` / `-Model`.
+
+`AI_assistant/examples.json` holds the few-shot examples, copied from the queries in `Logscale/` and `Graylog/` - keep it in sync when you edit those files, and add a handful of your own queries so the model matches your real field names and conventions. Both versions read the same `examples.json` and `mitre_reference.json` from their own folder (overridable with `--examples-file` / `--mitre-file`), so you only maintain one copy of each.
 
 ### MITRE ATT&CK grounding
 
