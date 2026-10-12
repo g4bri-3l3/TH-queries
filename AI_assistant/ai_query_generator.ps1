@@ -32,7 +32,7 @@
     Gemini API key. Defaults to $env:GEMINI_API_KEY.
 
 .PARAMETER Model
-    Gemini model name. Defaults to gemini-3.5-flash.
+    Gemini model name. Defaults to gemini-3.8-flash.
 
 .PARAMETER Explain
     Also print assumptions, MITRE mapping, and caveats.
@@ -53,7 +53,7 @@ Param(
     [string]$ExamplesFile = (Join-Path $PSScriptRoot "examples.json"),
     [string]$MitreFile = (Join-Path $PSScriptRoot "mitre_reference.json"),
     [string]$ApiKey = $env:GEMINI_API_KEY,
-    [string]$Model = "gemini-3.5-flash",
+    [string]$Model = "gemini-3.8-flash",
     [switch]$Explain
 )
 

@@ -36,7 +36,7 @@ from pathlib import Path
 
 import requests
 
-DEFAULT_MODEL = "gemini-3.5-flash"
+DEFAULT_MODEL = "gemini-3.8-flash"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 SCRIPT_DIR = Path(__file__).resolve().parent
