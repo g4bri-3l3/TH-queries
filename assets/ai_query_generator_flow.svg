@@ -34,7 +34,7 @@
   <!-- Stage 3: Gemini -->
   <rect x="546" y="140" width="180" height="130" rx="10" fill="#111827" stroke="#334155" stroke-width="1.5"/>
   <text x="636" y="175" font-size="15" font-weight="700" fill="#f8fafc" text-anchor="middle">Gemini API</text>
-  <text x="636" y="205" font-size="12" fill="#94a3b8" text-anchor="middle">gemini-3.5-flash</text>
+  <text x="636" y="205" font-size="12" fill="#94a3b8" text-anchor="middle">gemini-3.8-flash</text>
   <text x="636" y="222" font-size="12" fill="#94a3b8" text-anchor="middle">low temperature,</text>
   <text x="636" y="239" font-size="12" fill="#94a3b8" text-anchor="middle">JSON-only response</text>
 
